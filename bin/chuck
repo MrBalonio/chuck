@@ -1,0 +1,31 @@
+#!/usr/bin/env ruby -wKU
+
+require 'getopt/std'
+
+# require 'chuck'
+# require 'chuck/joke'
+Dir[File.join(File.dirname(__FILE__), '..', 'lib', '**', '*.rb')].each{|f| require f}
+
+options = Getopt::Std.getopts('c:Ch')
+
+USAGE = %Q{
+Usage: chuck [Ch] [-c quantity]
+
+  -C : Just list the categories available
+  -c : Specify the quantity of jokes to fetch
+  -h : Output this helpful message
+}
+
+if options['h'] then
+  puts USAGE
+  exit
+end
+
+if options['C'] then
+  p Chuck.categories
+  exit
+end
+
+quantity = ARGV.shift || 1
+
+Chuck::Request.retrieve(quantity: quantity).jokes.each{|j| puts j}

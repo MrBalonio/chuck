@@ -1,48 +1,51 @@
 require 'httparty'
+require 'json'
 
-class Chuck
+require 'pp'
 
-  BASE_URL = "http://api.icndb.com"
+Dir[File.join(File.dirname(__FILE__), 'chuck', '**', '*.rb')].each{|f| require f}
 
-  attr_reader :first_name, :last_name, :jokes, :id, :raw_response
+module Chuck
+  class Request
 
-  # Instance methods ==========================================================
+    include HTTParty
+    base_uri 'http://api.icndb.com'
 
-  def initialize(options = {})
-    options.each{|k, v| self.instance_variable_set(:"@#{k}", v) if self.respond_to?(k)}
-  end
+    attr_reader :first_name, :last_name, :jokes, :id, :raw_response
 
-  def joke
-    # @jokes.first
-    @jokes
-  end
+    # Instance methods ==========================================================
 
-  def success
-    @raw_response['type'] == 'success'
-  end
+    def initialize(options = {})
+      options.each{|k, v| self.instance_variable_set(:"@#{k}", v) if self.respond_to?(k)}
+    end
 
-  # Class methods =============================================================
+    def success
+      @raw_response['type'] == 'success'
+    end
 
-  def self.categories
-    HTTParty.get("#{BASE_URL}/categories").parsed_response['value']
-  end
+    # Class methods =============================================================
 
-  def self.retrieve(options = {})
-    url = "#{BASE_URL}/jokes/random"
-    url << "/#{options[:quantity]}" if options[:quantity]
+    def self.categories
+      get("/categories").parsed_response
+    end
 
-    query = Hash.new
-    query[:firstName] = options[:first_name] if options[:first_name]
-    query[:lastName]  = options[:last_name] if options[:last_name]
-    query[:limitTo]   = "[#{options[:only].join(',')}]" if options[:only]
-    query[:exclude]   = "[#{options[:exclude].join(',')}]" if options[:except]
+    def self.retrieve(options = {})
+      url = "/jokes/random/#{options[:quantity] or 1}"
 
-    result = HTTParty.get(url, query).parsed_response
+      query = Hash.new
+      query[:firstName] = options[:first_name] if options[:first_name]
+      query[:lastName]  = options[:last_name] if options[:last_name]
+      query[:limitTo]   = "[#{options[:only].join(',')}]" if options[:only]
+      query[:exclude]   = "[#{options[:exclude].join(',')}]" if options[:except]
 
-    Chuck.new id:           result['value']['id'],
-              jokes:        result['value']['joke'],
-              first_name:   query[:firstName],
-              last_name:    query[:lastName],
-              raw_response: result
+      result = JSON.parse(get(url, query).parsed_response)
+
+      Chuck::Request.new jokes:        Chuck::Joke.jokes_from_result(result['value']),
+                         first_name:   query[:firstName],
+                         last_name:    query[:lastName],
+                         raw_response: result
+
+    end
+
   end
 end
