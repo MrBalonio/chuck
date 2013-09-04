@@ -38,12 +38,13 @@ module Chuck
       query[:limitTo]   = "[#{options[:only].join(',')}]" if options[:only]
       query[:exclude]   = "[#{options[:exclude].join(',')}]" if options[:except]
 
-      result = JSON.parse(get(url, query).parsed_response)
+      #result = JSON.parse(get(url, query).parsed_response)
+      result = get(url, query).parsed_response
 
-      Chuck::Request.new jokes:        Chuck::Joke.jokes_from_result(result['value']),
-                         first_name:   query[:firstName],
-                         last_name:    query[:lastName],
-                         raw_response: result
+      #Chuck::Request.new jokes:        Chuck::Joke.jokes_from_result(result['value']),
+       #                  first_name:   query[:firstName],
+        #                 last_name:    query[:lastName],
+         #                raw_response: result
 
     end
 
